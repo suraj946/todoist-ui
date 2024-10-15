@@ -25,15 +25,33 @@ const AddTask: React.FC<AddTaskProps> = ({
   const [description, setDescription] = useState("");
 
   const [titleError, setTitleError] = useState("");
+  const [descError, setDescError] = useState("");
 
   const {createTodo, loading, updateTodoFunc} = useAddUpdateTodo();
+
+  const onTitleChange = (e: React.ChangeEvent<HTMLInputElement>):void => {
+    setTitle(e.target.value);
+    if(!title) setTitleError("Title is required");
+    else setTitleError("");
+  }
+
+  const onDescChange = (e: React.ChangeEvent<HTMLInputElement>):void => {
+    setDescription(e.target.value);
+    if(!description) setDescError("Description is required");
+    else setDescError("");
+  }
 
   const handleButtonClick = async():Promise<void> => {
     if(!title) {
       setTitleError("Title is required");
       return;
     }
+    if(!description) {
+      setDescError("Description is required");
+      return;
+    }
     setTitleError("");
+    setDescError("");
     if(isEdit) await updateTodoFunc(_id, {title, description});
     else await createTodo(title, description);
     setIsOpen(false);
@@ -47,6 +65,8 @@ const AddTask: React.FC<AddTaskProps> = ({
     }
     setTitle("");
     setDescription("");
+    setTitleError("");
+    setDescError("");
   }
 
   useEffect(() => {
@@ -76,7 +96,7 @@ const AddTask: React.FC<AddTaskProps> = ({
       <MyInput
         label='Title'
         value={title}
-        onChange={(e) => setTitle(e.target.value)}
+        onChange={onTitleChange}
         disabled={loading}
         error={titleError}
         placeholder='Enter title'
@@ -85,9 +105,10 @@ const AddTask: React.FC<AddTaskProps> = ({
       <MyInput
         label='Description'
         value={description}
-        onChange={(e) => setDescription(e.target.value)}
+        onChange={onDescChange}
         disabled={loading}
         placeholder='Enter description'
+        error={descError}
       />
     </MyDialog>
   )

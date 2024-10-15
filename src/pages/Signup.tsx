@@ -6,49 +6,63 @@ import LoginSignup from '@/layouts/LoginSignup';
 import { LoginSignupResponse } from '@/types';
 import instance from '@/utils/axiosInstance';
 import { getToastStyle } from '@/utils/utility';
-import { validateEmail, validateName, validatePassword } from '@/utils/validation';
+import { returnType, validateEmail, validateName, validatePassword } from '@/utils/validation';
 import { AxiosError } from 'axios';
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 
 const Signup = () => {
-  const [name, setName] = useState<string>('');
-  const [email, setEmail] = useState<string>('');
-  const [password, setPassword] = useState<string>('');
-  const [confirmPassword, setConfirmPassword] = useState<string>('');
-
-  const [nameError, setNameError] = useState<string>('');
-  const [emailError, setEmailError] = useState<string>('');
-  const [passwordError, setPasswordError] = useState<string>('');
-  const [confirmPasswordError, setConfirmPasswordError] = useState<string>('');
-
+  const [formData, setFormData] = useState({ name: "", email: "", password: "", confirmPassword: "" });
+  const [formDataError, setFormDataError] = useState({ name: "", email: "", password: "", confirmPassword: "" });
   const [loading, setLoading] = useState(false);
 
   const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const {setUser} = useUser();
+  const { setUser } = useUser();
+
+  type FormField = 'name' | 'email' | 'password' | 'confirmPassword';
+  const validationMap = {
+    name: validateName,
+    email: validateEmail,
+    password: validatePassword,
+    confirmPassword: (value: string): returnType => {
+      return {
+        isValid: value === formData.password,
+        error: value !== formData.password ? 'Password does not match' : ''
+      }
+    }
+  }
+
+  const onChangeInputs = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData({ ...formData, [name]: value });
+    const fieldName = name as FormField;
+    const validation = validationMap[fieldName];
+    const result = validation(value);
+    setFormDataError({ ...formDataError, [fieldName]: result.error });
+  }
 
   useEffect(() => {
     if (isAuthenticated) {
       navigate("/");
     }
-  }, [isAuthenticated, navigate])
+  }, [isAuthenticated, navigate]);
 
   const validateInputs = (): boolean => {
-    const nameCheck = validateName(name);
-    setNameError(nameCheck.error);
-    const emailCheck = validateEmail(email);
-    setEmailError(emailCheck.error);
-    const passwordCheck = validatePassword(password);
-    setPasswordError(passwordCheck.error);
-    let confirmPasswordCheck: boolean = true;
-    if (password !== confirmPassword) {
-      confirmPasswordCheck = false;
-      setConfirmPasswordError('Password does not match');
-    }
-    else setConfirmPasswordError('');
-    return nameCheck.isValid && emailCheck.isValid && passwordCheck.isValid && confirmPasswordCheck;
+    const errors = { name: "", email: "", password: "", confirmPassword: "" };
+    let isFormValid: boolean[] = [];
+
+    Object.keys(formData).forEach((key) => {
+      const field = key as FormField;
+      const validateFn = validationMap[field];
+      const validationResult = validateFn(formData[field]);
+      errors[field] = validationResult.error;
+      isFormValid.push(validationResult.isValid);
+    });
+
+    setFormDataError(errors);
+    return isFormValid.every(isValid => isValid);
   }
 
   const handleSignup = async () => {
@@ -61,8 +75,8 @@ const Signup = () => {
     if (!validateInputs()) return;
     setLoading(true);
     try {
-      const { data } = await instance.post<LoginSignupResponse>("/user/register", { name, email, password });
-      if(data.success){
+      const { data } = await instance.post<LoginSignupResponse>("/user/register", formData);
+      if (data.success) {
         setUser(data.data);
         toast({
           title: data.message,
@@ -77,7 +91,7 @@ const Signup = () => {
           className: getToastStyle("error")
         });
       }
-    }finally {
+    } finally {
       setLoading(false);
     }
   }
@@ -86,38 +100,42 @@ const Signup = () => {
       <h1 className="text-4xl font-bold m-4 text-primary-1 dark:text-dark-6">Sign-Up</h1>
       <div className="flex flex-col w-[90%] items-center">
         <MyInput
-          value={name}
-          onChange={(e) => setName(e.target.value)}
+          value={formData.name}
+          onChange={onChangeInputs}
           label="Name"
           placeholder="Name"
-          error={nameError}
+          error={formDataError.name}
           disabled={loading}
+          name='name'
         />
         <MyInput
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
+          value={formData.email}
+          onChange={onChangeInputs}
           label="Email"
           placeholder="Email"
-          error={emailError}
+          error={formDataError.email}
           disabled={loading}
+          name='email'
         />
         <MyInput
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
+          value={formData.password}
+          onChange={onChangeInputs}
           label="Password"
           placeholder="Password"
           type='password'
-          error={passwordError}
+          error={formDataError.password}
           disabled={loading}
+          name='password'
         />
         <MyInput
-          value={confirmPassword}
-          onChange={(e) => setConfirmPassword(e.target.value)}
+          value={formData.confirmPassword}
+          onChange={onChangeInputs}
           label="Confirm Password"
           placeholder="Confirm Password"
           type='password'
-          error={confirmPasswordError}
+          error={formDataError.confirmPassword}
           disabled={loading}
+          name='confirmPassword'
         />
         <MyButton
           onClick={handleSignup}

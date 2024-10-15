@@ -13,6 +13,7 @@ interface MyInputProps {
   value: string
   className?: string
   inputClassName?: string
+  name?: string
 }
 const MyInput: React.FC<MyInputProps> = ({
   label = "",
@@ -23,7 +24,8 @@ const MyInput: React.FC<MyInputProps> = ({
   onChange,
   value,
   className,
-  inputClassName
+  inputClassName,
+  name=""
 }) => {
   const [visible, setVisible] = useState<boolean>(false);
   return (
@@ -37,10 +39,11 @@ const MyInput: React.FC<MyInputProps> = ({
         id={label}
         placeholder={placeholder}
         className={`text-xl border-2 ${error ? 'border-red-500' : 'border-[#525252]'} py-5 ${inputClassName}`}
+        name={name}
       />
       {error ? 
         <Label className='text-red-500' >{error}</Label> : 
-        <p className='h-[14px]'></p>}
+        <p className='h-[24px]'></p>}
 
       {type === "password" && 
       <div

@@ -24,6 +24,17 @@ const Login: React.FC = () => {
   const navigate = useNavigate();
   const {toast} = useToast();
 
+  const handleChangeEmail = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setEmail(e.target.value);
+    const emailCheck = validateEmail(e.target.value);
+    setEmailError(emailCheck.error);
+  }
+  const handleChangePassword = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setPassword(e.target.value);
+    const passwordCheck = validatePassword(e.target.value);
+    setPasswordError(passwordCheck.error);
+  }
+
   useEffect(() => {
     if (isAuthenticated) {
       navigate("/");
@@ -73,7 +84,7 @@ const Login: React.FC = () => {
       <div className="flex flex-col w-[90%] items-center">
         <MyInput
           value={email}
-          onChange={(e) => setEmail(e.target.value)}
+          onChange={handleChangeEmail}
           label="Email"
           placeholder="Email"
           error={emailError}
@@ -81,7 +92,7 @@ const Login: React.FC = () => {
         />
         <MyInput
           value={password}
-          onChange={(e) => setPassword(e.target.value)}
+          onChange={handleChangePassword}
           label="Password"
           placeholder="Password"
           type='password'
